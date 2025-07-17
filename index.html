@@ -16,7 +16,6 @@
     <!-- Dependencias externas para la funcionalidad -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-    <!-- CORREGIDO: URL del script de ReactDOM apuntando a la versión de desarrollo correcta -->
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
@@ -37,7 +36,6 @@
     <script type="text/babel">
     // ========================================================================
     // INICIO DEL CÓDIGO DE LA APLICACIÓN COMPLETA
-    // Todo el código de los archivos .ts y .tsx está consolidado aquí.
     // ========================================================================
 
     // --- Contenido de types.ts ---
@@ -113,19 +111,12 @@
 
     // --- Contenido de services/dataService.ts ---
     const saveAcademicRecord = async (data) => {
-        // ========================== INSTRUCCIÓN IMPORTANTE ==========================
-        //
-        // Pega aquí la URL de la aplicación web que obtuviste al desplegar
-        // tu Google Apps Script. Debe tener un aspecto similar a:
-        // https://script.google.com/macros/s/AKfycby.../exec
-        //
-        // ============================================================================
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDMQBjix_zA5bxK6FGW9MnLk6vCaAGgeYoTShBW6c9F0RAD3kbLEJMlODNbZrQ5L-W/exec';
 
-        if (SCRIPT_URL === 'TU_GOOGLE_APPS_SCRIPT_URL_AQUI' || !SCRIPT_URL.startsWith('https://script.google.com')) {
+        if (SCRIPT_URL === 'TU_GOOGLE_APPS_SCRIPT_URL_AQUI' || !SCRIPT_URL.startsWith('https://script.google.com/')) {
             const errorMsg = "Error de configuración: La URL del servicio de guardado no ha sido establecida. Por favor, edita este archivo y pega la URL de tu Google Apps Script.";
             console.error(errorMsg);
-            alert(errorMsg); // Se mantiene alert por simplicidad, pero se podría reemplazar por un modal en el futuro.
+            alert(errorMsg);
             return Promise.reject(new Error("URL del script no configurada."));
         }
 
@@ -192,7 +183,7 @@
             </div>
             <button
               onClick={addItem}
-              className="flex items-center px-4 py-2 bg-[#00509E] text-white text-sm font-medium rounded-md hover:bg-[#003B73] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00509E]"
+              className="flex items-center px-4 py-2 bg-[#00509E] text-white text-sm font-medium rounded-md hover:bg-[#003B73] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00509E] shrink-0"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -251,34 +242,10 @@
         </div>
       );
     };
-
+    
     const SupervisedThesesSection = ({ data, onUpdate }) => {
       const newItemFactory = () => ({ id: crypto.randomUUID(), author: '', year: '', programType: '', programName: '', thesisTitle: '', institution: '', sameProgram: '', accessLink: '' });
-      return <DynamicTable 
-        title="2. Tesis dirigidas en los últimos 5 años (finalizadas)" 
-        items={data} 
-        onUpdate={onUpdate} 
-        newItemFactory={newItemFactory} 
-        columnCount={9} 
-        renderHeaders={() => (
-          <tr>
-            <Th>Autor</Th><Th>Año</Th><Th>Tipo de programa</Th><Th>Nombre del programa</Th><Th>Título de la Tesis</Th><Th>Institución</Th><Th>¿Mismo programa?</Th><Th>Link de acceso</Th>
-            <th scope="col" className="relative px-6 py-3"><span className="sr-only">Eliminar</span></th>
-          </tr>
-        )} 
-        renderRow={(item, index, handleItemChange) => (
-          <>
-            <Td><TableInput value={item.author} onChange={(e)=>handleItemChange(index, 'author', e.target.value)} placeholder="Autor"/></Td>
-            <Td><TableInput type="number" value={item.year} onChange={(e)=>handleItemChange(index, 'year', e.target.value)} placeholder="Año"/></Td>
-            <Td><TableSelect value={item.programType} onChange={(e)=>handleItemChange(index, 'programType', e.target.value)}><option value="">Seleccionar</option><option value="Pregrado">Pregrado</option><option value="Magister">Magister</option><option value="Doctorado">Doctorado</option></TableSelect></Td>
-            <Td><TableInput value={item.programName} onChange={(e)=>handleItemChange(index, 'programName', e.target.value)} placeholder="Nombre del programa"/></Td>
-            <Td><TableInput value={item.thesisTitle} onChange={(e)=>handleItemChange(index, 'thesisTitle', e.target.value)} placeholder="Título de la tesis"/></Td>
-            <Td><TableInput value={item.institution} onChange={(e)=>handleItemChange(index, 'institution', e.target.value)} placeholder="Institución"/></Td>
-            <Td><TableSelect value={item.sameProgram} onChange={(e)=>handleItemChange(index, 'sameProgram', e.target.value)}><option value="">Seleccionar</option><option value="Sí">Sí</option><option value="No">No</option></TableSelect></Td>
-            <Td><TableInput type="url" value={item.accessLink} onChange={(e)=>handleItemChange(index, 'accessLink', e.target.value)} placeholder="URL"/></Td>
-          </>
-        )}
-      />;
+      return <DynamicTable title="2. Tesis dirigidas en los últimos 5 años (finalizadas)" items={data} onUpdate={onUpdate} newItemFactory={newItemFactory} columnCount={9} renderHeaders={()=>(<tr><Th>Autor</Th><Th>Año</Th><Th>Tipo de programa</Th><Th>Nombre del programa</Th><Th>Título de la Tesis</Th><Th>Institución</Th><Th>¿Mismo programa?</Th><Th>Link de acceso</Th><th scope="col" className="relative px-6 py-3"><span className="sr-only">Eliminar</span></th></tr>)} renderRow={(item, index, handleItemChange)=>(<><Td><TableInput value={item.author} onChange={(e)=>handleItemChange(index, 'author', e.target.value)} placeholder="Autor"/></Td><Td><TableInput type="number" value={item.year} onChange={(e)=>handleItemChange(index, 'year', e.target.value)} placeholder="Año"/></Td><Td><TableSelect value={item.programType} onChange={(e)=>handleItemChange(index, 'programType', e.target.value)}><option value="">Seleccionar</option><option value="Pregrado">Pregrado</option><option value="Magister">Magister</option><option value="Doctorado">Doctorado</option></TableSelect></Td><Td><TableInput value={item.programName} onChange={(e)=>handleItemChange(index, 'programName', e.target.value)} placeholder="Nombre del programa"/></Td><Td><TableInput value={item.thesisTitle} onChange={(e)=>handleItemChange(index, 'thesisTitle', e.target.value)} placeholder="Título de la tesis"/></Td><Td><TableInput value={item.institution} onChange={(e)=>handleItemChange(index, 'institution', e.target.value)} placeholder="Institución"/></Td><Td><TableSelect value={item.sameProgram} onChange={(e)=>handleItemChange(index, 'sameProgram', e.target.value)}><option value="">Seleccionar</option><option value="Sí">Sí</option><option value="No">No</option></TableSelect></Td><Td><TableInput type="url" value={item.accessLink} onChange={(e)=>handleItemChange(index, 'accessLink', e.target.value)} placeholder="URL"/></Td></>)}/>;
     };
 
     const PublicationsSection = ({ data, onUpdate }) => {
@@ -520,13 +487,13 @@
     };
 
     // --- Contenido de components/Sidebar.tsx ---
-    const Sidebar = ({ activeSection, setActiveSection }) => {
+    const Sidebar = ({ activeSection, onSectionSelect }) => {
       const sectionsList = Object.values(SECTIONS);
       return (
         <aside className="w-64 bg-[#003366] text-white flex-shrink-0 p-4 shadow-lg hidden md:block">
           <div className="sticky top-4">
             <div className="p-4 mb-4 flex justify-center">
-                <img src="public/logo-uv-blanco.png" alt="Logo Universidad de Valparaíso" className="h-20" />
+              <img src="public/logo-uv-blanco.png" alt="Logo Universidad de Valparaíso" className="h-20" />
             </div>
             <h2 className="text-xl font-bold mb-6 border-b border-[#2A5D84] pb-2 text-center">Secciones</h2>
             <nav>
@@ -534,7 +501,7 @@
                 {sectionsList.map((section, index) => (
                   <li key={section} className="mb-2">
                     <button 
-                      onClick={() => setActiveSection(section)} 
+                      onClick={() => onSectionSelect(section)} 
                       className={`w-full text-left px-4 py-2 rounded-md transition-colors duration-200 text-sm ${activeSection === section ? 'bg-[#2A5D84] font-semibold' : 'hover:bg-[#004080]'}`}
                     >
                       {index + 1}. {section}
@@ -551,17 +518,24 @@
     // --- Contenido de App.tsx ---
     const App = () => {
       const [activeSection, setActiveSection] = React.useState(SECTIONS.ACADEMIC_MEMBERS);
+      const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
       const [formData, setFormData] = React.useState({ 
         academicMembers: [], supervisedTheses: [], publications: [], patents: [], 
         researchProjects: [], educationalMaterials: [], academicWorks: [], 
         innovationProjects: [], centersGroupsNetworks: [] 
       });
       const [isSaving, setIsSaving] = React.useState(false);
-      const [saveStatus, setSaveStatus] = React.useState(null); // 'success', 'error', or null
+      const [saveStatus, setSaveStatus] = React.useState(null);
 
       const updateFormData = React.useCallback((key, value) => {
         setFormData(prev => ({ ...prev, [key]: value }));
       }, []);
+
+      const handleSectionSelect = (section) => {
+        setActiveSection(section);
+        setIsMobileMenuOpen(false);
+        window.scrollTo(0, 0); // Sube al inicio de la página al cambiar de sección
+      };
 
       const handleSave = async () => {
         setIsSaving(true);
@@ -572,7 +546,7 @@
         } catch (error) {
           setSaveStatus('error');
           console.error("Error al guardar:", error);
-          setTimeout(() => setSaveStatus(null), 6000); // Ocultar mensaje de error después de 6 seg
+          setTimeout(() => setSaveStatus(null), 6000);
         } finally {
           setIsSaving(false);
         }
@@ -586,72 +560,97 @@
           case SECTIONS.THESIS: return <SupervisedThesesSection data={formData.supervisedTheses} onUpdate={(d) => updateFormData('supervisedTheses', d)} />;
           case SECTIONS.PUBLICATIONS: return <PublicationsSection data={formData.publications} onUpdate={(d) => updateFormData('publications', d)} />;
           case SECTIONS.PATENTS: return <PatentsSection data={formData.patents} onUpdate={(d) => updateFormData('patents', d)} />;
-          case SECTIONS.RESEARCH_PROJECTS: return <ResearchProjectsSection data={formData.researchProjects} onUpdate={(d) => updateFormData('researchProjects', d)} />;
-          case SECTIONS.EDUCATIONAL_MATERIAL: return <EducationalMaterialSection data={formData.educationalMaterials} onUpdate={(d) => updateFormData('educationalMaterials', d)} />;
-          case SECTIONS.ACADEMIC_WORK: return <AcademicWorkSection data={formData.academicWorks} onUpdate={(d) => updateFormData('academicWorks', d)} />;
-          case SECTIONS.INNOVATION_PROJECTS: return <InnovationProjectsSection data={formData.innovationProjects} onUpdate={(d) => updateFormData('innovationProjects', d)} />;
-          case SECTIONS.CENTERS_GROUPS: return <CentersGroupsSection data={formData.centersGroupsNetworks} onUpdate={(d) => updateFormData('centersGroupsNetworks', d)} />;
+          case SECTIONS.RESEARCH_PROJECTS: return <ResearchProjectsSection data={formData.researchProjects} onUpdate={(d) => updateFormData('researchProjects',d)} />;
+          case SECTIONS.EDUCATIONAL_MATERIAL: return <EducationalMaterialSection data={formData.educationalMaterials} onUpdate={(d) => updateFormData('educationalMaterials',d)} />;
+          case SECTIONS.ACADEMIC_WORK: return <AcademicWorkSection data={formData.academicWorks} onUpdate={(d) => updateFormData('academicWorks',d)} />;
+          case SECTIONS.INNOVATION_PROJECTS: return <InnovationProjectsSection data={formData.innovationProjects} onUpdate={(d) => updateFormData('innovationProjects',d)} />;
+          case SECTIONS.CENTERS_GROUPS: return <CentersGroupsSection data={formData.centersGroupsNetworks} onUpdate={(d) => updateFormData('centersGroupsNetworks',d)} />;
           case SECTIONS.NOTES: return <NotesSection />;
           default: return <p>Seleccione una sección</p>;
         }
       };
 
       return (
-        <div className="flex min-h-screen bg-gray-50">
-          <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-          <main className="flex-1 p-4 sm:p-6 md:p-10">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
-                  <div className="flex items-center gap-4">
-                    {/* CORREGIDO: Imagen de placeholder. Reemplazar con la URL de tu logo. */}
-                    <img src="public/logo-uv-color.png" alt="Logo UV" className="h-12 md:h-16"/>
-                    <h1 className="text-2xl md:text-3xl font-bold text-[#003366]">Ficha Académica</h1>
-                  </div>
+        <div className="flex min-h-screen bg-gray-100">
+          <Sidebar activeSection={activeSection} onSectionSelect={handleSectionSelect} />
+          
+          <div className="flex-1 flex flex-col">
+            {/* Header principal */}
+            <header className="sticky top-0 bg-white/80 backdrop-blur-sm shadow-sm z-10 p-4 border-b">
+              <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
                   <div className="flex items-center gap-3">
-                    <button onClick={handleSave} disabled={isSaving} className="flex items-center px-6 py-2 bg-[#00509E] text-white font-semibold rounded-lg shadow-md hover:bg-[#003B73] focus:outline-none focus:ring-2 focus:ring-[#00509E] focus:ring-opacity-75 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200">
-                      {isSaving ? (
-                        <><svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Guardando...</>
-                      ) : 'Guardar Ficha'}
+                    <img src="public/logo-uv-color.png" alt="Logo UV" className="h-10 shrink-0"/>
+                    <h1 className="text-lg sm:text-xl font-bold text-[#003366]">Ficha Académica</h1>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={handleSave} disabled={isSaving} className="flex items-center px-3 py-2 sm:px-4 bg-[#00509E] text-white font-semibold rounded-lg shadow-md hover:bg-[#003B73] focus:outline-none focus:ring-2 focus:ring-[#00509E] focus:ring-opacity-75 disabled:bg-gray-400 transition-colors duration-200 text-sm">
+                      {isSaving ? 'Guardando...' : 'Guardar'}
+                    </button>
+                    {/* Botón de menú móvil */}
+                    <button
+                      onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                      className="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#00509E]"
+                      aria-label="Abrir menú de secciones"
+                    >
+                      <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+                      </svg>
                     </button>
                   </div>
               </div>
+            </header>
 
-              {saveStatus === 'success' && (
-                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-md flex justify-between items-center" role="alert">
-                      <div>
-                          <p className="font-bold">Éxito</p>
-                          <p>La ficha académica se ha guardado correctamente.</p>
-                      </div>
-                      <button onClick={handleExport} className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition-colors duration-200">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                          Exportar a Excel
-                      </button>
-                  </div>
-              )}
-              {saveStatus === 'error' && (
-                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert">
-                      <p className="font-bold">Error</p>
-                      <p>No se pudo guardar la ficha. Por favor, revisa la consola para más detalles e inténtelo de nuevo.</p>
-                  </div>
-              )}
-
-              <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
-                {renderSection()}
+            {/* Menú desplegable para móvil */}
+            {isMobileMenuOpen && (
+              <div className="md:hidden bg-white border-b border-gray-200 shadow-lg">
+                <nav className="p-4">
+                  <h3 className="text-base font-semibold text-gray-500 uppercase tracking-wider mb-2">Secciones</h3>
+                  <ul>
+                    {Object.values(SECTIONS).map((section, index) => (
+                      <li key={section}>
+                        <button
+                          onClick={() => handleSectionSelect(section)}
+                          className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors duration-150 flex justify-between items-center ${activeSection === section ? 'bg-[#E6F0FA] text-[#00509E] font-bold' : 'text-gray-700 hover:bg-gray-100'}`}
+                        >
+                          <span>{index + 1}. {section}</span>
+                          {activeSection === section && <span className="text-[#00509E]">✓</span>}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
               </div>
-            </div>
-          </main>
+            )}
+
+            {/* Contenido principal */}
+            <main className="flex-1 p-4 sm:p-6 md:p-10">
+              <div className="max-w-7xl mx-auto">
+                {saveStatus === 'success' && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-md flex justify-between items-center" role="alert">
+                    <div><p className="font-bold">Éxito</p><p>La ficha se ha guardado correctamente.</p></div>
+                    <button onClick={handleExport} className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700">Exportar</button>
+                  </div>
+                )}
+                {saveStatus === 'error' && (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert">
+                    <p className="font-bold">Error</p><p>No se pudo guardar la ficha. Inténtelo de nuevo.</p>
+                  </div>
+                )}
+                <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
+                  {renderSection()}
+                </div>
+              </div>
+            </main>
+          </div>
         </div>
       );
     }
 
-    // --- Contenido de index.tsx (la llamada final al render) ---
+    // --- Renderizado final de la aplicación ---
     const rootElement = document.getElementById('root');
     const root = ReactDOM.createRoot(rootElement);
-    root.render(<App />);
+    root.render(<React.StrictMode><App /></React.StrictMode>);
 
-    // ========================================================================
-    // FIN DEL CÓDIGO DE LA APLICACIÓN
-    // ========================================================================
     </script>
 </body>
 </html>
