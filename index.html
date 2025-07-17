@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registro de Ficha Académica</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts (Inter) para una mejor tipografía -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Dependencias externas para la funcionalidad -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <!-- CORREGIDO: URL del script de ReactDOM apuntando a la versión de desarrollo correcta -->
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Aplicar la fuente Inter a toda la página */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Pequeño ajuste para que los inputs de fecha no se vean tan pequeños */
+        input[type="date"] {
+            min-width: 120px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+    // ========================================================================
+    // INICIO DEL CÓDIGO DE LA APLICACIÓN COMPLETA
+    // Todo el código de los archivos .ts y .tsx está consolidado aquí.
+    // ========================================================================
+
+    // --- Contenido de types.ts ---
+    const SECTIONS = {
+        ACADEMIC_MEMBERS: 'Ficha académica',
+        THESIS: 'Tesis dirigidas',
+        PUBLICATIONS: 'Publicaciones',
+        PATENTS: 'Patentes',
+        RESEARCH_PROJECTS: 'Proyectos de investigación',
+        EDUCATIONAL_MATERIAL: 'Material educativo original',
+        ACADEMIC_WORK: 'Trabajo académico original',
+        INNOVATION_PROJECTS: 'Proyectos de investigación e innovación',
+        CENTERS_GROUPS: 'Centros, grupos, programas y redes',
+        NOTES: 'Notas'
+    };
+
+    const PublicationType = {
+      WOS: 'Publicaciones indexadas WoS',
+      SCOPUS: 'Publicaciones indexadas SCOPUS',
+      SCIELO: 'Publicaciones indexadas SCIELO',
+      OTHER_INDEXED: 'Otras publicaciones indexadas',
+      NON_INDEXED_BOOK: 'Publicaciones no indexadas LIBRO',
+      NON_INDEXED_CHAPTER: 'Publicaciones no indexadas CAPÍTULOS DE LIBRO',
+      OTHER_NON_INDEXED: 'Otras publicaciones no indexadas',
+    };
+
+    // --- Contenido de services/excelService.ts ---
+    const createSheetFromData = (data, headers) => {
+        const headerKeys = Object.keys(headers);
+        const headerValues = Object.values(headers);
+
+        const sheetData = [
+            headerValues,
+            ...data.map(item => 
+                headerKeys.map(key => item[key] ?? '')
+            )
+        ];
+        return XLSX.utils.aoa_to_sheet(sheetData);
+    };
+
+    const exportToExcel = (record) => {
+        const wb = XLSX.utils.book_new();
+
+        const sections = [
+            { key: 'academicMembers', name: 'Ficha académica', headers: { name: 'Nombre del académico', sex: 'Sexo', degree: 'Grado académico máximo', institution: 'Institución', graduationYear: 'Año de graduación', country: 'País', researchArea: 'Línea de investigación' } },
+            { key: 'supervisedTheses', name: 'Tesis dirigidas', headers: { author: 'Autor', year: 'Año', programType: 'Tipo de programa', programName: 'Nombre del programa', thesisTitle: 'Título de la Tesis', institution: 'Institución', sameProgram: '¿Mismo programa?', accessLink: 'Link de acceso' } },
+            { key: 'publications', name: 'Publicaciones', headers: { type: 'Tipo de Publicación', authors: 'Autor(es)', mainAuthor: 'Autor/a Principal', year: 'Año', title: 'Título', journalName: 'Nombre Revista', bookTitle: 'Nombre Libro', place: 'Lugar', editorial: 'Editorial', status: 'Estado', issn: 'ISSN', accessLink: 'Link de Acceso' }, mapper: (items) => items.map(p => ({ ...p, title: p.articleTitle || p.chapterTitle || p.bookTitle })) },
+            { key: 'patents', name: 'Patentes', headers: { inventors: 'Inventor(es)', patentName: 'Nombre patente', requestDate: 'Fecha de solicitud', publicationDate: 'Fecha de publicación', registryNumber: 'Nº de registro', status: 'Estado', accessLink: 'Link de acceso' } },
+            { key: 'researchProjects', name: 'Proyectos Investigación', headers: { title: 'Título', fundingSource: 'Fuente de financiamiento', adjudicationYear: 'Año de adjudicación', executionPeriod: 'Período de ejecución', role: 'Rol en el proyecto', accessLink: 'Link de acceso' } },
+            { key: 'educationalMaterials', name: 'Material Educativo', headers: { academicName: 'Nombre completo del académico', materialType: 'Tipo de material educativo', title: 'Título', year: 'Año', curricularActivity: 'Actividad curricular', availability: 'Disponibilidad' } },
+            { key: 'academicWorks', name: 'Trabajo Académico', headers: { academicName: 'Nombre completo del académico', workType: 'Tipo de trabajo académico', title: 'Título', year: 'Año', curricularActivity: 'Actividad curricular', availability: 'Disponibilidad' } },
+            { key: 'innovationProjects', name: 'Proyectos Innovación', headers: { academicName: 'Nombre completo del académico', projectType: 'Tipo de proyecto', projectName: 'Nombre del proyecto', year: 'Año', curricularActivity: 'Actividad curricular', availability: 'Disponibilidad' } },
+            { key: 'centersGroupsNetworks', name: 'Centros y Grupos', headers: { academicName: 'Nombre completo del académico', description: 'Descripción', type: 'Tipo', name: 'Nombre', startDate: 'Año de inicio', currentSituation: 'Situación actual', curricularActivity: 'Actividad curricular' } }
+        ];
+
+        sections.forEach(section => {
+            let items = record[section.key];
+            if (items && items.length > 0) {
+                if (section.mapper) {
+                    items = section.mapper(items);
+                }
+                const ws = createSheetFromData(items, section.headers);
+                XLSX.utils.book_append_sheet(wb, ws, section.name);
+            }
+        });
+
+        const academicName = record.academicMembers[0]?.name.trim().replace(/\s+/g, '_') || 'academico';
+        const date = new Date().toISOString().slice(0, 10);
+        const fileName = `ficha_${academicName}_${date}.xlsx`;
+
+        XLSX.writeFile(wb, fileName);
+    };
+
+    // --- Contenido de services/dataService.ts ---
+    const saveAcademicRecord = async (data) => {
+        // ========================== INSTRUCCIÓN IMPORTANTE ==========================
+        //
+        // Pega aquí la URL de la aplicación web que obtuviste al desplegar
+        // tu Google Apps Script. Debe tener un aspecto similar a:
+        // https://script.google.com/macros/s/AKfycby.../exec
+        //
+        // ============================================================================
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDMQBjix_zA5bxK6FGW9MnLk6vCaAGgeYoTShBW6c9F0RAD3kbLEJMlODNbZrQ5L-W/exec';
+
+        if (SCRIPT_URL === 'TU_GOOGLE_APPS_SCRIPT_URL_AQUI' || !SCRIPT_URL.startsWith('https://script.google.com')) {
+            const errorMsg = "Error de configuración: La URL del servicio de guardado no ha sido establecida. Por favor, edita este archivo y pega la URL de tu Google Apps Script.";
+            console.error(errorMsg);
+            alert(errorMsg); // Se mantiene alert por simplicidad, pero se podría reemplazar por un modal en el futuro.
+            return Promise.reject(new Error("URL del script no configurada."));
+        }
+
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'cors',
+                redirect: 'follow',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`Error en la respuesta del servidor: ${response.status} ${response.statusText}. Detalles: ${errorBody}`);
+            }
+            const result = await response.json();
+            if (result.result === 'success') {
+                return Promise.resolve();
+            } else {
+                throw new Error(result.message || 'Error desconocido del script.');
+            }
+        } catch (error) {
+            console.error("Error en saveAcademicRecord:", error);
+            return Promise.reject(error);
+        }
+    };
+
+    // --- Contenido de components/shared/ ---
+    const TableInput = (props) => (
+      <input
+        {...props}
+        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#00509E] focus:border-[#00509E] sm:text-sm p-2 bg-white"
+      />
+    );
+
+    const TableSelect = ({ children, ...props }) => (
+        <select
+            {...props}
+            className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#00509E] focus:border-[#00509E] sm:text-sm p-2 bg-white"
+        >
+            {children}
+        </select>
+    );
+
+    const DynamicTable = (props) => {
+      const { title, subtitle, items, onUpdate, renderHeaders, renderRow, newItemFactory, columnCount } = props;
+
+      const handleItemChange = (index, field, value) => {
+        const updatedItems = [...items];
+        updatedItems[index] = { ...updatedItems[index], [field]: value };
+        onUpdate(updatedItems);
+      };
+
+      const addItem = () => { onUpdate([...items, newItemFactory()]); };
+      const removeItem = (idToRemove) => { onUpdate(items.filter(item => item.id !== idToRemove)); };
+
+      return (
+        <div className="mb-12">
+          <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+              {subtitle && <p className="text-sm text-gray-500 mt-1 max-w-prose">{subtitle}</p>}
+            </div>
+            <button
+              onClick={addItem}
+              className="flex items-center px-4 py-2 bg-[#00509E] text-white text-sm font-medium rounded-md hover:bg-[#003B73] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00509E]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Añadir Fila
+            </button>
+          </div>
+          <div className="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">{renderHeaders()}</thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {items.length > 0 ? (
+                  items.map((item, index) => 
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      {renderRow(item, index, handleItemChange)}
+                      <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
+                        <button onClick={() => removeItem(item.id)} className="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-100">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg>
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                ) : (
+                  <tr><td colSpan={columnCount} className="px-6 py-12 text-center text-gray-500">No hay datos. Haga clic en "Añadir Fila" para comenzar.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    };
+
+    // --- Contenido de components/sections/*.tsx ---
+    const Th = ({ children }) => <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{children}</th>;
+    const Td = ({ children }) => <td className="px-6 py-4 whitespace-nowrap">{children}</td>;
+
+    const AcademicMembersSection = ({ data, onUpdate }) => {
+      const newItemFactory = () => ({ id: crypto.randomUUID(), name: '', sex: '', degree: '', institution: '', graduationYear: '', country: '', researchArea: '' });
+      React.useEffect(() => { if (!data || data.length === 0) { onUpdate([newItemFactory()]); } }, []);
+      const member = data?.[0];
+      if (!member) { return <div className="text-center p-4">Cargando...</div>; }
+      const handleItemChange = (field, value) => { onUpdate([{ ...member, [field]: value }]); };
+      return (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-700">1. Ficha académica del integrante</h2>
+          <p className="text-sm text-gray-500 mt-1 mb-6">Complete la información del académico/a que llena esta ficha. Utilizar únicamente este formato.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 bg-gray-50 p-6 rounded-lg border">
+            <div className="md:col-span-2"><label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre del académico o académica</label><TableInput id="name" value={member.name} onChange={(e) => handleItemChange('name', e.target.value)} placeholder="Nombre completo"/></div>
+            <div><label htmlFor="sex" className="block text-sm font-medium text-gray-700 mb-1">Sexo</label><TableSelect id="sex" value={member.sex} onChange={(e) => handleItemChange('sex', e.target.value)}><option value="">Seleccionar</option><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option><option value="Otro">Otro</option></TableSelect></div>
+            <div><label htmlFor="degree" className="block text-sm font-medium text-gray-700 mb-1">Grado académico máximo</label><TableInput id="degree" value={member.degree} onChange={(e) => handleItemChange('degree', e.target.value)} placeholder="Ej: Doctor en..."/></div>
+            <div><label htmlFor="institution" className="block text-sm font-medium text-gray-700 mb-1">Institución</label><TableInput id="institution" value={member.institution} onChange={(e) => handleItemChange('institution', e.target.value)} placeholder="Institución que otorga el grado"/></div>
+            <div><label htmlFor="graduationYear" className="block text-sm font-medium text-gray-700 mb-1">Año de graduación</label><TableInput id="graduationYear" type="number" value={member.graduationYear} onChange={(e) => handleItemChange('graduationYear', e.target.value)} placeholder="Año"/></div>
+            <div><label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">País</label><TableInput id="country" value={member.country} onChange={(e) => handleItemChange('country', e.target.value)} placeholder="País donde obtuvo el grado"/></div>
+            <div className="md:col-span-2"><label htmlFor="researchArea" className="block text-sm font-medium text-gray-700 mb-1">Línea(s) de investigación</label><TableInput id="researchArea" value={member.researchArea} onChange={(e) => handleItemChange('researchArea', e.target.value)} placeholder="Área o áreas de investigación"/></div>
+          </div>
+        </div>
+      );
+    };
+
+    const SupervisedThesesSection = ({ data, onUpdate }) => {
+      const newItemFactory = () => ({ id: crypto.randomUUID(), author: '', year: '', programType: '', programName: '', thesisTitle: '', institution: '', sameProgram: '', accessLink: '' });
+      return <DynamicTable 
+        title="2. Tesis dirigidas en los últimos 5 años (finalizadas)" 
+        items={data} 
+        onUpdate={onUpdate} 
+        newItemFactory={newItemFactory} 
+        columnCount={9} 
+        renderHeaders={() => (
+          <tr>
+            <Th>Autor</Th><Th>Año</Th><Th>Tipo de programa</Th><Th>Nombre del programa</Th><Th>Título de la Tesis</Th><Th>Institución</Th><Th>¿Mismo programa?</Th><Th>Link de acceso</Th>
+            <th scope="col" className="relative px-6 py-3"><span className="sr-only">Eliminar</span></th>
+          </tr>
+        )} 
+        renderRow={(item, index, handleItemChange) => (
+          <>
+            <Td><TableInput value={item.author} onChange={(e)=>handleItemChange(index, 'author', e.target.value)} placeholder="Autor"/></Td>
+            <Td><TableInput type="number" value={item.year} onChange={(e)=>handleItemChange(index, 'year', e.target.value)} placeholder="Año"/></Td>
+            <Td><TableSelect value={item.programType} onChange={(e)=>handleItemChange(index, 'programType', e.target.value)}><option value="">Seleccionar</option><option value="Pregrado">Pregrado</option><option value="Magister">Magister</option><option value="Doctorado">Doctorado</option></TableSelect></Td>
+            <Td><TableInput value={item.programName} onChange={(e)=>handleItemChange(index, 'programName', e.target.value)} placeholder="Nombre del programa"/></Td>
+            <Td><TableInput value={item.thesisTitle} onChange={(e)=>handleItemChange(index, 'thesisTitle', e.target.value)} placeholder="Título de la tesis"/></Td>
+            <Td><TableInput value={item.institution} onChange={(e)=>handleItemChange(index, 'institution', e.target.value)} placeholder="Institución"/></Td>
+            <Td><TableSelect value={item.sameProgram} onChange={(e)=>handleItemChange(index, 'sameProgram', e.target.value)}><option value="">Seleccionar</option><option value="Sí">Sí</option><option value="No">No</option></TableSelect></Td>
+            <Td><TableInput type="url" value={item.accessLink} onChange={(e)=>handleItemChange(index, 'accessLink', e.target.value)} placeholder="URL"/></Td>
+          </>
+        )}
+      />;
+    };
+
+    const PublicationsSection = ({ data, onUpdate }) => {
+      const newItemFactory = (type) => ({ id: crypto.randomUUID(), type: type, authors: '', mainAuthor: '', year: '', articleTitle: '', journalName: '', bookTitle: '', chapterTitle: '', place: '', editorial: '', status: '', issn: '', accessLink: '' });
+      
+      const renderTableForType = (type, title, subtitle) => {
+        const isBook = type === PublicationType.NON_INDEXED_BOOK;
+        const isChapter = type === PublicationType.NON_INDEXED_CHAPTER;
+        const isArticle = !isBook && !isChapter;
+        const items = data.filter(p => p.type === type);
+        const updateItems = (updatedItems) => { const otherItems = data.filter(p => p.type !== type); onUpdate([...otherItems, ...updatedItems]); };
+        
+        return <DynamicTable 
+          title={title} 
+          subtitle={subtitle} 
+          items={items} 
+          onUpdate={updateItems} 
+          newItemFactory={() => newItemFactory(type)} 
+          columnCount={isBook || isChapter ? 10 : 9}
+          renderHeaders={() => (
+            <tr>
+              <Th>Autor(es)</Th><Th>Autor/a Principal</Th><Th>Año</Th>
+              {isArticle && <><Th>Título del Artículo</Th><Th>Nombre Revista</Th></>}
+              {isBook && <Th>Nombre Libro</Th>}
+              {isChapter && <><Th>Nombre del Capítulo</Th><Th>Nombre Libro</Th></>}
+              {(isBook || isChapter) && <><Th>Lugar</Th><Th>Editorial</Th></>}
+              <Th>Estado</Th>
+              {isArticle && <Th>ISSN</Th>}
+              <Th>Link de Acceso</Th>
+              <th scope="col" className="relative px-6 py-3"><span className="sr-only">Eliminar</span></th>
+            </tr>
+          )}
+          renderRow={(item, index, handleItemChange) => (
+            <>
+              <Td><TableInput value={item.authors} onChange={(e)=>handleItemChange(index, 'authors', e.target.value)} placeholder="Nombres"/></Td>
+              <Td><TableInput value={item.mainAuthor} onChange={(e)=>handleItemChange(index, 'mainAuthor', e.target.value)} placeholder="Nombre"/></Td>
+              <Td><TableInput type="number" value={item.year} onChange={(e)=>handleItemChange(index, 'year', e.target.value)} placeholder="Año"/></Td>
+              {isArticle && <>
+                <Td><TableInput value={item.articleTitle} onChange={(e)=>handleItemChange(index, 'articleTitle', e.target.value)} placeholder="Título"/></Td>
+                <Td><TableInput value={item.journalName} onChange={(e)=>handleItemChange(index, 'journalName', e.target.value)} placeholder="Nombre"/></Td>
+              </>}
+              {isBook && <Td><TableInput value={item.bookTitle} onChange={(e)=>handleItemChange(index, 'bookTitle', e.target.value)} placeholder="Nombre del libro"/></Td>}
+              {isChapter && <>
+                <Td><TableInput value={item.chapterTitle} onChange={(e)=>handleItemChange(index, 'chapterTitle', e.target.value)} placeholder="Nombre del capítulo"/></Td>
+                <Td><TableInput value={item.bookTitle} onChange={(e)=>handleItemChange(index, 'bookTitle', e.target.value)} placeholder="Nombre del libro"/></Td>
+              </>}
+              {(isBook || isChapter) && <>
+                <Td><TableInput value={item.place} onChange={(e)=>handleItemChange(index, 'place', e.target.value)} placeholder="Lugar"/></Td>
+                <Td><TableInput value={item.editorial} onChange={(e)=>handleItemChange(index, 'editorial', e.target.value)} placeholder="Editorial"/></Td>
+              </>}
+              <Td><TableInput value={item.status} onChange={(e)=>handleItemChange(index, 'status', e.target.value)} placeholder="Estado"/></Td>
+              {isArticle && <Td><TableInput value={item.issn} onChange={(e)=>handleItemChange(index, 'issn', e.target.value)} placeholder="ISSN"/></Td>}
+              <Td><TableInput type="url" value={item.accessLink} onChange={(e)=>handleItemChange(index, 'accessLink', e.target.value)} placeholder="URL"/></Td>
+            </>
+          )}
+        />;
+      };
+
+      return (
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-8">3. Listado de publicaciones en los últimos 5 años</h1>
+          {renderTableForType(PublicationType.WOS, '3.1 Publicaciones indexadas WoS', 'En caso de publicaciones con más de un autor, indicar el autor/a principal.')}
+          {renderTableForType(PublicationType.SCOPUS, '3.2 Publicaciones indexadas SCOPUS', null)}
+          {renderTableForType(PublicationType.SCIELO, '3.3 Publicaciones indexadas SCIELO', null)}
+          {renderTableForType(PublicationType.OTHER_INDEXED, '3.4 Otras publicaciones indexadas', 'Identificar tipo de indexación: LATINDEX u otra')}
+          {renderTableForType(PublicationType.NON_INDEXED_BOOK, '3.5 Publicaciones no indexadas LIBRO', null)}
+          {renderTableForType(PublicationType.NON_INDEXED_CHAPTER, '3.6 Publicaciones no indexadas CAPÍTULOS DE LIBRO', null)}
+          {renderTableForType(PublicationType.OTHER_NON_INDEXED, '3.7 Otras publicaciones no indexadas', 'Identificar tipo, revistas con referato u otro')}
+        </div>
+      );
+    };
+
+    const PatentsSection = ({ data, onUpdate }) => {
+        const newItemFactory = () => ({ id: crypto.randomUUID(), inventors: '', patentName: '', requestDate: '', publicationDate: '', registryNumber: '', status: '', accessLink: '' });
+        return <DynamicTable 
+          title="4. Patentes" 
+          items={data} 
+          onUpdate={onUpdate} 
+          newItemFactory={newItemFactory} 
+          columnCount={8} 
+          renderHeaders={() => (
+            <tr>
+              <Th>Inventor(es)</Th><Th>Nombre patente</Th><Th>Fecha de solicitud</Th><Th>Fecha de publicación</Th><Th>Nº de registro</Th><Th>Estado</Th><Th>Link de acceso</Th>
+              <th scope="col" className="relative px-6 py-3"><span className="sr-only">Eliminar</span></th>
+            </tr>
+          )} 
+          renderRow={(item, index, handleItemChange) => (
+            <>
+              <Td><TableInput value={item.inventors} onChange={(e)=>handleItemChange(index, 'inventors', e.target.value)} placeholder="Inventores"/></Td>
+              <Td><TableInput value={item.patentName} onChange={(e)=>handleItemChange(index, 'patentName', e.target.value)} placeholder="Nombre"/></Td>
+              <Td><TableInput type="date" value={item.requestDate} onChange={(e)=>handleItemChange(index, 'requestDate', e.target.value)}/></Td>
+              <Td><TableInput type="date" value={item.publicationDate} onChange={(e)=>handleItemChange(index, 'publicationDate', e.target.value)}/></Td>
+              <Td><TableInput value={item.registryNumber} onChange={(e)=>handleItemChange(index, 'registryNumber', e.target.value)} placeholder="Número"/></Td>
+              <Td><TableInput value={item.status} onChange={(e)=>handleItemChange(index, 'status', e.target.value)} placeholder="Estado"/></Td>
+              <Td><TableInput type="url" value={item.accessLink} onChange={(e)=>handleItemChange(index, 'accessLink', e.target.value)} placeholder="URL"/></Td>
+            </>
+          )}
+        />;
+    };
+
+    const GenericSection = ({ title, data, onUpdate, newItemFactory, headers, fields }) => {
+      return <DynamicTable
+        title={title}
+        items={data}
+        onUpdate={onUpdate}
+        newItemFactory={newItemFactory}
+        columnCount={headers.length + 1}
+        renderHeaders={() => (
+          <tr>
+            {headers.map(h => <Th key={h}>{h}</Th>)}
+            <th scope="col" className="relative px-6 py-3"><span className="sr-only">Eliminar</span></th>
+          </tr>
+        )}
+        renderRow={(item, index, handleItemChange) => (
+          <>
+            {fields.map(field => (
+              <Td key={field.key}>
+                <TableInput 
+                  value={item[field.key]} 
+                  onChange={(e) => handleItemChange(index, field.key, e.target.value)} 
+                  placeholder={field.placeholder}
+                  type={field.type || 'text'}
+                />
+              </Td>
+            ))}
+          </>
+        )}
+      />;
+    };
+
+    const ResearchProjectsSection = ({ data, onUpdate }) => (
+      <GenericSection 
+        title="5. Listado de proyectos de investigación, últimos 5 años"
+        data={data}
+        onUpdate={onUpdate}
+        newItemFactory={() => ({ id: crypto.randomUUID(), title: '', fundingSource: '', adjudicationYear: '', executionPeriod: '', role: '', accessLink: '' })}
+        headers={['Título', 'Fuente de financiamiento', 'Año de adjudicación', 'Período de ejecución', 'Rol en el proyecto', 'Link de acceso']}
+        fields={[
+          { key: 'title', placeholder: 'Título' },
+          { key: 'fundingSource', placeholder: 'Fuente' },
+          { key: 'adjudicationYear', placeholder: 'Año', type: 'number' },
+          { key: 'executionPeriod', placeholder: 'Ej: 2022-2024' },
+          { key: 'role', placeholder: 'Rol' },
+          { key: 'accessLink', placeholder: 'URL', type: 'url' },
+        ]}
+      />
+    );
+    
+    const EducationalMaterialSection = ({ data, onUpdate }) => (
+      <GenericSection 
+        title="6. Material educativo original"
+        data={data}
+        onUpdate={onUpdate}
+        newItemFactory={() => ({ id: crypto.randomUUID(), academicName: '', materialType: '', title: '', year: '', curricularActivity: '', availability: '' })}
+        headers={['Nombre completo del académico', 'Tipo de material educativo', 'Título', 'Año', 'Actividad curricular', 'Disponibilidad']}
+        fields={[
+          { key: 'academicName', placeholder: 'Nombre' },
+          { key: 'materialType', placeholder: 'Tipo' },
+          { key: 'title', placeholder: 'Título' },
+          { key: 'year', placeholder: 'Año', type: 'number' },
+          { key: 'curricularActivity', placeholder: 'Actividad' },
+          { key: 'availability', placeholder: 'Disponibilidad' },
+        ]}
+      />
+    );
+
+    const AcademicWorkSection = ({ data, onUpdate }) => (
+      <GenericSection 
+        title="7. Trabajo académico original"
+        data={data}
+        onUpdate={onUpdate}
+        newItemFactory={() => ({ id: crypto.randomUUID(), academicName: '', workType: '', title: '', year: '', curricularActivity: '', availability: '' })}
+        headers={['Nombre completo del académico', 'Tipo de trabajo académico', 'Título', 'Año', 'Actividad curricular', 'Disponibilidad']}
+        fields={[
+          { key: 'academicName', placeholder: 'Nombre' },
+          { key: 'workType', placeholder: 'Tipo' },
+          { key: 'title', placeholder: 'Título' },
+          { key: 'year', placeholder: 'Año', type: 'number' },
+          { key: 'curricularActivity', placeholder: 'Actividad' },
+          { key: 'availability', placeholder: 'Disponibilidad' },
+        ]}
+      />
+    );
+
+    const InnovationProjectsSection = ({ data, onUpdate }) => (
+      <GenericSection 
+        title="8. Proyectos de investigación e innovación"
+        data={data}
+        onUpdate={onUpdate}
+        newItemFactory={() => ({ id: crypto.randomUUID(), academicName: '', projectType: '', projectName: '', year: '', curricularActivity: '', availability: '' })}
+        headers={['Nombre completo del académico', 'Tipo de proyecto', 'Nombre del proyecto', 'Año', 'Actividad curricular', 'Disponibilidad']}
+        fields={[
+          { key: 'academicName', placeholder: 'Nombre' },
+          { key: 'projectType', placeholder: 'Tipo' },
+          { key: 'projectName', placeholder: 'Nombre' },
+          { key: 'year', placeholder: 'Año', type: 'number' },
+          { key: 'curricularActivity', placeholder: 'Actividad' },
+          { key: 'availability', placeholder: 'Disponibilidad' },
+        ]}
+      />
+    );
+
+    const CentersGroupsSection = ({ data, onUpdate }) => (
+      <GenericSection 
+        title="9. Centros, grupos, programas y redes"
+        data={data}
+        onUpdate={onUpdate}
+        newItemFactory={() => ({ id: crypto.randomUUID(), academicName: '', description: '', type: '', name: '', startDate: '', currentSituation: '', curricularActivity: '' })}
+        headers={['Nombre completo del académico', 'Descripción', 'Tipo', 'Nombre', 'Año de inicio', 'Situación actual', 'Actividad curricular']}
+        fields={[
+          { key: 'academicName', placeholder: 'Nombre' },
+          { key: 'description', placeholder: 'Descripción' },
+          { key: 'type', placeholder: 'Tipo' },
+          { key: 'name', placeholder: 'Nombre' },
+          { key: 'startDate', placeholder: 'Año', type: 'number' },
+          { key: 'currentSituation', placeholder: 'Situación' },
+          { key: 'curricularActivity', placeholder: 'Actividad' },
+        ]}
+      />
+    );
+    
+    const NotesSection = () => {
+      const notes = [
+        "[1] Si se estima necesario, indicar todos los grados académicos obtenidos o equivalentes. Se tendrá en consideración los períodos de licencia por descanso de maternidad (pre y post-natal), adopción o tuición legal según lo detallado en Resolución Exenta DJ N°233-4 del 13 de enero de 2011.",
+        "[2] Para efectos de contabilizar la productividad académica de mujeres en claustros/núcleos, se considerará la información de los últimos 5 años.",
+        "[3] Completar solo para aquellos académicos que se desempeñen en la carrera o programa, con información de los últimos 5 años.",
+        "[4] Corresponde a materiales y recursos que desarrollan y hacen avanzar nuevas interpretaciones, contenidos y metodologías que impactan el aprendizaje.",
+        "[5] En cada tabla, cuando se indique 'Disponibilidad', se refiere a la disponibilidad del recurso. Por ejemplo, sitio web, revista digital o impresa, repositorio virtual, biblioteca, etc.",
+        "[6] Algunos pueden ser: Tesis de grado del académico, artículos de investigación, ensayos académicos, monografías, entre otros."
+      ];
+      return (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-700 mb-4">Notas</h2>
+          <div className="space-y-4 text-gray-600 bg-gray-50 p-6 rounded-lg border border-gray-200">
+            {notes.map((note, index) => (<p key={index} className="leading-relaxed text-sm">{note}</p>))}
+          </div>
+        </div>
+      );
+    };
+
+    // --- Contenido de components/Sidebar.tsx ---
+    const Sidebar = ({ activeSection, setActiveSection }) => {
+      const sectionsList = Object.values(SECTIONS);
+      return (
+        <aside className="w-64 bg-[#003366] text-white flex-shrink-0 p-4 shadow-lg hidden md:block">
+          <div className="sticky top-4">
+            <div className="p-4 mb-4 flex justify-center">
+                <img src="public/logo-uv-blanco.png" alt="Logo Universidad de Valparaíso" className="h-20" />
+            </div>
+            <h2 className="text-xl font-bold mb-6 border-b border-[#2A5D84] pb-2 text-center">Secciones</h2>
+            <nav>
+              <ul>
+                {sectionsList.map((section, index) => (
+                  <li key={section} className="mb-2">
+                    <button 
+                      onClick={() => setActiveSection(section)} 
+                      className={`w-full text-left px-4 py-2 rounded-md transition-colors duration-200 text-sm ${activeSection === section ? 'bg-[#2A5D84] font-semibold' : 'hover:bg-[#004080]'}`}
+                    >
+                      {index + 1}. {section}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+        </aside>
+      );
+    };
+
+    // --- Contenido de App.tsx ---
+    const App = () => {
+      const [activeSection, setActiveSection] = React.useState(SECTIONS.ACADEMIC_MEMBERS);
+      const [formData, setFormData] = React.useState({ 
+        academicMembers: [], supervisedTheses: [], publications: [], patents: [], 
+        researchProjects: [], educationalMaterials: [], academicWorks: [], 
+        innovationProjects: [], centersGroupsNetworks: [] 
+      });
+      const [isSaving, setIsSaving] = React.useState(false);
+      const [saveStatus, setSaveStatus] = React.useState(null); // 'success', 'error', or null
+
+      const updateFormData = React.useCallback((key, value) => {
+        setFormData(prev => ({ ...prev, [key]: value }));
+      }, []);
+
+      const handleSave = async () => {
+        setIsSaving(true);
+        setSaveStatus(null);
+        try {
+          await saveAcademicRecord(formData);
+          setSaveStatus('success');
+        } catch (error) {
+          setSaveStatus('error');
+          console.error("Error al guardar:", error);
+          setTimeout(() => setSaveStatus(null), 6000); // Ocultar mensaje de error después de 6 seg
+        } finally {
+          setIsSaving(false);
+        }
+      };
+
+      const handleExport = () => { exportToExcel(formData); };
+      
+      const renderSection = () => {
+        switch (activeSection) {
+          case SECTIONS.ACADEMIC_MEMBERS: return <AcademicMembersSection data={formData.academicMembers} onUpdate={(d) => updateFormData('academicMembers', d)} />;
+          case SECTIONS.THESIS: return <SupervisedThesesSection data={formData.supervisedTheses} onUpdate={(d) => updateFormData('supervisedTheses', d)} />;
+          case SECTIONS.PUBLICATIONS: return <PublicationsSection data={formData.publications} onUpdate={(d) => updateFormData('publications', d)} />;
+          case SECTIONS.PATENTS: return <PatentsSection data={formData.patents} onUpdate={(d) => updateFormData('patents', d)} />;
+          case SECTIONS.RESEARCH_PROJECTS: return <ResearchProjectsSection data={formData.researchProjects} onUpdate={(d) => updateFormData('researchProjects', d)} />;
+          case SECTIONS.EDUCATIONAL_MATERIAL: return <EducationalMaterialSection data={formData.educationalMaterials} onUpdate={(d) => updateFormData('educationalMaterials', d)} />;
+          case SECTIONS.ACADEMIC_WORK: return <AcademicWorkSection data={formData.academicWorks} onUpdate={(d) => updateFormData('academicWorks', d)} />;
+          case SECTIONS.INNOVATION_PROJECTS: return <InnovationProjectsSection data={formData.innovationProjects} onUpdate={(d) => updateFormData('innovationProjects', d)} />;
+          case SECTIONS.CENTERS_GROUPS: return <CentersGroupsSection data={formData.centersGroupsNetworks} onUpdate={(d) => updateFormData('centersGroupsNetworks', d)} />;
+          case SECTIONS.NOTES: return <NotesSection />;
+          default: return <p>Seleccione una sección</p>;
+        }
+      };
+
+      return (
+        <div className="flex min-h-screen bg-gray-50">
+          <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+          <main className="flex-1 p-4 sm:p-6 md:p-10">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
+                  <div className="flex items-center gap-4">
+                    {/* CORREGIDO: Imagen de placeholder. Reemplazar con la URL de tu logo. */}
+                    <img src="public/logo-uv-color.png" alt="Logo UV" className="h-12 md:h-16"/>
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#003366]">Ficha Académica</h1>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button onClick={handleSave} disabled={isSaving} className="flex items-center px-6 py-2 bg-[#00509E] text-white font-semibold rounded-lg shadow-md hover:bg-[#003B73] focus:outline-none focus:ring-2 focus:ring-[#00509E] focus:ring-opacity-75 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200">
+                      {isSaving ? (
+                        <><svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Guardando...</>
+                      ) : 'Guardar Ficha'}
+                    </button>
+                  </div>
+              </div>
+
+              {saveStatus === 'success' && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-md flex justify-between items-center" role="alert">
+                      <div>
+                          <p className="font-bold">Éxito</p>
+                          <p>La ficha académica se ha guardado correctamente.</p>
+                      </div>
+                      <button onClick={handleExport} className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition-colors duration-200">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                          Exportar a Excel
+                      </button>
+                  </div>
+              )}
+              {saveStatus === 'error' && (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert">
+                      <p className="font-bold">Error</p>
+                      <p>No se pudo guardar la ficha. Por favor, revisa la consola para más detalles e inténtelo de nuevo.</p>
+                  </div>
+              )}
+
+              <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
+                {renderSection()}
+              </div>
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    // --- Contenido de index.tsx (la llamada final al render) ---
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<App />);
+
+    // ========================================================================
+    // FIN DEL CÓDIGO DE LA APLICACIÓN
+    // ========================================================================
+    </script>
+</body>
+</html>
