@@ -52,11 +52,9 @@
         NOTES: 'Notas'
     };
 
+    // MODIFICADO: Se unifican los tipos de publicación indexada.
     const PublicationType = {
-      WOS: 'Publicaciones indexadas WoS',
-      SCOPUS: 'Publicaciones indexadas SCOPUS',
-      SCIELO: 'Publicaciones indexadas SCIELO',
-      OTHER_INDEXED: 'Otras publicaciones indexadas',
+      INDEXED: 'Publicaciones indexadas',
       NON_INDEXED_BOOK: 'Publicaciones no indexadas LIBRO',
       NON_INDEXED_CHAPTER: 'Publicaciones no indexadas CAPÍTULOS DE LIBRO',
       OTHER_NON_INDEXED: 'Otras publicaciones no indexadas',
@@ -82,7 +80,7 @@
         const sections = [
             { key: 'academicMembers', name: 'Ficha académica', headers: { name: 'Nombre del académico', sex: 'Sexo', degree: 'Grado académico máximo', institution: 'Institución', graduationYear: 'Año de graduación', country: 'País', researchArea: 'Línea de investigación' } },
             { key: 'supervisedTheses', name: 'Tesis dirigidas', headers: { author: 'Autor', year: 'Año', programType: 'Tipo de programa', programName: 'Nombre del programa', thesisTitle: 'Título de la Tesis', institution: 'Institución', sameProgram: '¿Mismo programa?', accessLink: 'Link de acceso' } },
-            { key: 'publications', name: 'Publicaciones', headers: { type: 'Tipo de Publicación', authors: 'Autor(es)', mainAuthor: 'Autor/a Principal', year: 'Año', title: 'Título', journalName: 'Nombre Revista', bookTitle: 'Nombre Libro', place: 'Lugar', editorial: 'Editorial', status: 'Estado', issn: 'ISSN', accessLink: 'Link de Acceso' }, mapper: (items) => items.map(p => ({ ...p, title: p.articleTitle || p.chapterTitle || p.bookTitle })) },
+            { key: 'publications', name: 'Publicaciones', headers: { type: 'Tipo de Publicación', indexation: 'Indexación', authors: 'Autor(es)', mainAuthor: 'Autor/a Principal', year: 'Año', title: 'Título', journalName: 'Nombre Revista', bookTitle: 'Nombre Libro', place: 'Lugar', editorial: 'Editorial', status: 'Estado', issn: 'ISSN', accessLink: 'Link de Acceso' }, mapper: (items) => items.map(p => ({ ...p, title: p.articleTitle || p.chapterTitle || p.bookTitle })) },
             { key: 'patents', name: 'Patentes', headers: { inventors: 'Inventor(es)', patentName: 'Nombre patente', requestDate: 'Fecha de solicitud', publicationDate: 'Fecha de publicación', registryNumber: 'Nº de registro', status: 'Estado', accessLink: 'Link de acceso' } },
             { key: 'researchProjects', name: 'Proyectos Investigación', headers: { title: 'Título', fundingSource: 'Fuente de financiamiento', adjudicationYear: 'Año de adjudicación', executionPeriod: 'Período de ejecución', role: 'Rol en el proyecto', accessLink: 'Link de acceso' } },
             { key: 'educationalMaterials', name: 'Material Educativo', headers: { academicName: 'Nombre completo del académico', materialType: 'Tipo de material educativo', title: 'Título', year: 'Año', curricularActivity: 'Actividad curricular', availability: 'Disponibilidad' } },
@@ -248,25 +246,51 @@
       return <DynamicTable title="2. Tesis dirigidas en los últimos 5 años (finalizadas)" items={data} onUpdate={onUpdate} newItemFactory={newItemFactory} columnCount={9} renderHeaders={()=>(<tr><Th>Autor</Th><Th>Año</Th><Th>Tipo de programa</Th><Th>Nombre del programa</Th><Th>Título de la Tesis</Th><Th>Institución</Th><Th>¿Mismo programa?</Th><Th>Link de acceso</Th><th scope="col" className="relative px-6 py-3"><span className="sr-only">Eliminar</span></th></tr>)} renderRow={(item, index, handleItemChange)=>(<><Td><TableInput value={item.author} onChange={(e)=>handleItemChange(index, 'author', e.target.value)} placeholder="Autor"/></Td><Td><TableInput type="number" value={item.year} onChange={(e)=>handleItemChange(index, 'year', e.target.value)} placeholder="Año"/></Td><Td><TableSelect value={item.programType} onChange={(e)=>handleItemChange(index, 'programType', e.target.value)}><option value="">Seleccionar</option><option value="Pregrado">Pregrado</option><option value="Magister">Magister</option><option value="Doctorado">Doctorado</option></TableSelect></Td><Td><TableInput value={item.programName} onChange={(e)=>handleItemChange(index, 'programName', e.target.value)} placeholder="Nombre del programa"/></Td><Td><TableInput value={item.thesisTitle} onChange={(e)=>handleItemChange(index, 'thesisTitle', e.target.value)} placeholder="Título de la tesis"/></Td><Td><TableInput value={item.institution} onChange={(e)=>handleItemChange(index, 'institution', e.target.value)} placeholder="Institución"/></Td><Td><TableSelect value={item.sameProgram} onChange={(e)=>handleItemChange(index, 'sameProgram', e.target.value)}><option value="">Seleccionar</option><option value="Sí">Sí</option><option value="No">No</option></TableSelect></Td><Td><TableInput type="url" value={item.accessLink} onChange={(e)=>handleItemChange(index, 'accessLink', e.target.value)} placeholder="URL"/></Td></>)}/>;
     };
 
+    // MODIFICADO: La sección de publicaciones ahora refleja la nueva estructura unificada.
     const PublicationsSection = ({ data, onUpdate }) => {
-      const newItemFactory = (type) => ({ id: crypto.randomUUID(), type: type, authors: '', mainAuthor: '', year: '', articleTitle: '', journalName: '', bookTitle: '', chapterTitle: '', place: '', editorial: '', status: '', issn: '', accessLink: '' });
+      const newItemFactory = (type, indexation = '') => ({ 
+          id: crypto.randomUUID(), 
+          type: type, 
+          authors: '', 
+          mainAuthor: '', 
+          year: '', 
+          articleTitle: '', 
+          journalName: '', 
+          bookTitle: '', 
+          chapterTitle: '', 
+          place: '', 
+          editorial: '', 
+          status: '', 
+          issn: '', 
+          accessLink: '',
+          indexation: indexation
+      });
       
       const renderTableForType = (type, title, subtitle) => {
         const isBook = type === PublicationType.NON_INDEXED_BOOK;
         const isChapter = type === PublicationType.NON_INDEXED_CHAPTER;
-        const isArticle = !isBook && !isChapter;
-        const items = data.filter(p => p.type === type);
-        const updateItems = (updatedItems) => { const otherItems = data.filter(p => p.type !== type); onUpdate([...otherItems, ...updatedItems]); };
+        const isArticle = type === PublicationType.INDEXED || type === PublicationType.OTHER_NON_INDEXED;
         
+        const items = data.filter(p => p.type === type);
+        const updateItems = (updatedItems) => { 
+            const otherItems = data.filter(p => p.type !== type); 
+            onUpdate([...otherItems, ...updatedItems]); 
+        };
+        
+        let columnCount = 7;
+        if (isBook || isChapter) columnCount = 8;
+        if (type === PublicationType.INDEXED) columnCount = 9;
+
         return <DynamicTable 
           title={title} 
           subtitle={subtitle} 
           items={items} 
           onUpdate={updateItems} 
-          newItemFactory={() => newItemFactory(type)} 
-          columnCount={isBook || isChapter ? 10 : 9}
+          newItemFactory={() => newItemFactory(type, 'WOS')}
+          columnCount={columnCount}
           renderHeaders={() => (
             <tr>
+              { type === PublicationType.INDEXED && <Th>Indexación</Th> }
               <Th>Autor(es)</Th><Th>Autor/a Principal</Th><Th>Año</Th>
               {isArticle && <><Th>Título del Artículo</Th><Th>Nombre Revista</Th></>}
               {isBook && <Th>Nombre Libro</Th>}
@@ -280,6 +304,17 @@
           )}
           renderRow={(item, index, handleItemChange) => (
             <>
+              { type === PublicationType.INDEXED && 
+                <Td>
+                  <TableSelect value={item.indexation} onChange={(e)=>handleItemChange(index, 'indexation', e.target.value)}>
+                    <option value="WOS">WOS</option>
+                    <option value="SCOPUS">SCOPUS</option>
+                    <option value="SCIELO">SCIELO</option>
+                    <option value="LATINDEX">LATINDEX</option>
+                    <option value="OTRA">OTRA</option>
+                  </TableSelect>
+                </Td>
+              }
               <Td><TableInput value={item.authors} onChange={(e)=>handleItemChange(index, 'authors', e.target.value)} placeholder="Nombres"/></Td>
               <Td><TableInput value={item.mainAuthor} onChange={(e)=>handleItemChange(index, 'mainAuthor', e.target.value)} placeholder="Nombre"/></Td>
               <Td><TableInput type="number" value={item.year} onChange={(e)=>handleItemChange(index, 'year', e.target.value)} placeholder="Año"/></Td>
@@ -307,13 +342,10 @@
       return (
         <div>
           <h1 className="text-2xl font-bold text-gray-800 mb-8">3. Listado de publicaciones en los últimos 5 años</h1>
-          {renderTableForType(PublicationType.WOS, '3.1 Publicaciones indexadas WoS', 'En caso de publicaciones con más de un autor, indicar el autor/a principal.')}
-          {renderTableForType(PublicationType.SCOPUS, '3.2 Publicaciones indexadas SCOPUS', null)}
-          {renderTableForType(PublicationType.SCIELO, '3.3 Publicaciones indexadas SCIELO', null)}
-          {renderTableForType(PublicationType.OTHER_INDEXED, '3.4 Otras publicaciones indexadas', 'Identificar tipo de indexación: LATINDEX u otra')}
-          {renderTableForType(PublicationType.NON_INDEXED_BOOK, '3.5 Publicaciones no indexadas LIBRO', null)}
-          {renderTableForType(PublicationType.NON_INDEXED_CHAPTER, '3.6 Publicaciones no indexadas CAPÍTULOS DE LIBRO', null)}
-          {renderTableForType(PublicationType.OTHER_NON_INDEXED, '3.7 Otras publicaciones no indexadas', 'Identificar tipo, revistas con referato u otro')}
+          {renderTableForType(PublicationType.INDEXED, '3.1 Publicaciones indexadas', 'En caso de publicaciones con más de un autor, indicar el autor/a principal.')}
+          {renderTableForType(PublicationType.NON_INDEXED_BOOK, '3.2 Publicaciones no indexadas LIBRO', '')}
+          {renderTableForType(PublicationType.NON_INDEXED_CHAPTER, '3.3 Publicaciones no indexadas CAPÍTULOS DE LIBRO', '')}
+          {renderTableForType(PublicationType.OTHER_NON_INDEXED, '3.4 Otras publicaciones no indexadas', 'Identificar tipo, revistas con referato u otro')}
         </div>
       );
     };
