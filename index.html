@@ -52,7 +52,6 @@
         NOTES: 'Notas'
     };
 
-    // MODIFICADO: Se unifican los tipos de publicación indexada.
     const PublicationType = {
       INDEXED: 'Publicaciones indexadas',
       NON_INDEXED_BOOK: 'Publicaciones no indexadas LIBRO',
@@ -233,7 +232,12 @@
             <div><label htmlFor="sex" className="block text-sm font-medium text-gray-700 mb-1">Sexo</label><TableSelect id="sex" value={member.sex} onChange={(e) => handleItemChange('sex', e.target.value)}><option value="">Seleccionar</option><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option><option value="Otro">Otro</option></TableSelect></div>
             <div><label htmlFor="degree" className="block text-sm font-medium text-gray-700 mb-1">Grado académico máximo</label><TableInput id="degree" value={member.degree} onChange={(e) => handleItemChange('degree', e.target.value)} placeholder="Ej: Doctor en..."/></div>
             <div><label htmlFor="institution" className="block text-sm font-medium text-gray-700 mb-1">Institución</label><TableInput id="institution" value={member.institution} onChange={(e) => handleItemChange('institution', e.target.value)} placeholder="Institución que otorga el grado"/></div>
-            <div><label htmlFor="graduationYear" className="block text-sm font-medium text-gray-700 mb-1">Año de graduación</label><TableInput id="graduationYear" type="number" value={member.graduationYear} onChange={(e) => handleItemChange('graduationYear', e.target.value)} placeholder="Año"/></div>
+            <div>
+                <label htmlFor="graduationYear" className="block text-sm font-medium text-gray-700 mb-1">Año de graduación</label>
+                <div style={{ minWidth: '100px' }}>
+                    <TableInput id="graduationYear" type="number" value={member.graduationYear} onChange={(e) => handleItemChange('graduationYear', e.target.value)} placeholder="Año"/>
+                </div>
+            </div>
             <div><label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">País</label><TableInput id="country" value={member.country} onChange={(e) => handleItemChange('country', e.target.value)} placeholder="País donde obtuvo el grado"/></div>
             <div className="md:col-span-2"><label htmlFor="researchArea" className="block text-sm font-medium text-gray-700 mb-1">Línea(s) de investigación</label><TableInput id="researchArea" value={member.researchArea} onChange={(e) => handleItemChange('researchArea', e.target.value)} placeholder="Área o áreas de investigación"/></div>
           </div>
@@ -243,10 +247,34 @@
     
     const SupervisedThesesSection = ({ data, onUpdate }) => {
       const newItemFactory = () => ({ id: crypto.randomUUID(), author: '', year: '', programType: '', programName: '', thesisTitle: '', institution: '', sameProgram: '', accessLink: '' });
-      return <DynamicTable title="2. Tesis dirigidas en los últimos 5 años (finalizadas)" items={data} onUpdate={onUpdate} newItemFactory={newItemFactory} columnCount={9} renderHeaders={()=>(<tr><Th>Autor</Th><Th>Año</Th><Th>Tipo de programa</Th><Th>Nombre del programa</Th><Th>Título de la Tesis</Th><Th>Institución</Th><Th>¿Mismo programa?</Th><Th>Link de acceso</Th><th scope="col" className="relative px-6 py-3"><span className="sr-only">Eliminar</span></th></tr>)} renderRow={(item, index, handleItemChange)=>(<><Td><TableInput value={item.author} onChange={(e)=>handleItemChange(index, 'author', e.target.value)} placeholder="Autor"/></Td><Td><TableInput type="number" value={item.year} onChange={(e)=>handleItemChange(index, 'year', e.target.value)} placeholder="Año"/></Td><Td><TableSelect value={item.programType} onChange={(e)=>handleItemChange(index, 'programType', e.target.value)}><option value="">Seleccionar</option><option value="Pregrado">Pregrado</option><option value="Magister">Magister</option><option value="Doctorado">Doctorado</option></TableSelect></Td><Td><TableInput value={item.programName} onChange={(e)=>handleItemChange(index, 'programName', e.target.value)} placeholder="Nombre del programa"/></Td><Td><TableInput value={item.thesisTitle} onChange={(e)=>handleItemChange(index, 'thesisTitle', e.target.value)} placeholder="Título de la tesis"/></Td><Td><TableInput value={item.institution} onChange={(e)=>handleItemChange(index, 'institution', e.target.value)} placeholder="Institución"/></Td><Td><TableSelect value={item.sameProgram} onChange={(e)=>handleItemChange(index, 'sameProgram', e.target.value)}><option value="">Seleccionar</option><option value="Sí">Sí</option><option value="No">No</option></TableSelect></Td><Td><TableInput type="url" value={item.accessLink} onChange={(e)=>handleItemChange(index, 'accessLink', e.target.value)} placeholder="URL"/></Td></>)}/>;
+      return <DynamicTable 
+        title="2. Tesis dirigidas en los últimos 5 años (finalizadas)" 
+        items={data} 
+        onUpdate={onUpdate} 
+        newItemFactory={newItemFactory} 
+        columnCount={9} 
+        renderHeaders={()=>(
+            <tr><Th>Autor</Th><Th>Año</Th><Th>Tipo de programa</Th><Th>Nombre del programa</Th><Th>Título de la Tesis</Th><Th>Institución</Th><Th>¿Mismo programa?</Th><Th>Link de acceso</Th><th scope="col" className="relative px-6 py-3"><span className="sr-only">Eliminar</span></th></tr>
+        )} 
+        renderRow={(item, index, handleItemChange)=>(
+            <>
+                <Td><TableInput value={item.author} onChange={(e)=>handleItemChange(index, 'author', e.target.value)} placeholder="Autor"/></Td>
+                <Td>
+                    <div style={{ minWidth: '100px' }}>
+                        <TableInput type="number" value={item.year} onChange={(e)=>handleItemChange(index, 'year', e.target.value)} placeholder="Año"/>
+                    </div>
+                </Td>
+                <Td><TableSelect value={item.programType} onChange={(e)=>handleItemChange(index, 'programType', e.target.value)}><option value="">Seleccionar</option><option value="Pregrado">Pregrado</option><option value="Magister">Magister</option><option value="Doctorado">Doctorado</option></TableSelect></Td>
+                <Td><TableInput value={item.programName} onChange={(e)=>handleItemChange(index, 'programName', e.target.value)} placeholder="Nombre del programa"/></Td>
+                <Td><TableInput value={item.thesisTitle} onChange={(e)=>handleItemChange(index, 'thesisTitle', e.target.value)} placeholder="Título de la tesis"/></Td>
+                <Td><TableInput value={item.institution} onChange={(e)=>handleItemChange(index, 'institution', e.target.value)} placeholder="Institución"/></Td>
+                <Td><TableSelect value={item.sameProgram} onChange={(e)=>handleItemChange(index, 'sameProgram', e.target.value)}><option value="">Seleccionar</option><option value="Sí">Sí</option><option value="No">No</option></TableSelect></Td>
+                <Td><TableInput type="url" value={item.accessLink} onChange={(e)=>handleItemChange(index, 'accessLink', e.target.value)} placeholder="URL"/></Td>
+            </>
+        )}
+      />;
     };
 
-    // MODIFICADO: La sección de publicaciones ahora refleja la nueva estructura unificada.
     const PublicationsSection = ({ data, onUpdate }) => {
       const newItemFactory = (type, indexation = '') => ({ 
           id: crypto.randomUUID(), 
@@ -317,7 +345,11 @@
               }
               <Td><TableInput value={item.authors} onChange={(e)=>handleItemChange(index, 'authors', e.target.value)} placeholder="Nombres"/></Td>
               <Td><TableInput value={item.mainAuthor} onChange={(e)=>handleItemChange(index, 'mainAuthor', e.target.value)} placeholder="Nombre"/></Td>
-              <Td><TableInput type="number" value={item.year} onChange={(e)=>handleItemChange(index, 'year', e.target.value)} placeholder="Año"/></Td>
+              <Td>
+                <div style={{ minWidth: '100px' }}>
+                    <TableInput type="number" value={item.year} onChange={(e)=>handleItemChange(index, 'year', e.target.value)} placeholder="Año"/>
+                </div>
+              </Td>
               {isArticle && <>
                 <Td><TableInput value={item.articleTitle} onChange={(e)=>handleItemChange(index, 'articleTitle', e.target.value)} placeholder="Título"/></Td>
                 <Td><TableInput value={item.journalName} onChange={(e)=>handleItemChange(index, 'journalName', e.target.value)} placeholder="Nombre"/></Td>
@@ -378,6 +410,7 @@
         />;
     };
 
+    // MODIFICADO: Se agrega minWidth a los campos de año en las GenericSection.
     const GenericSection = ({ title, data, onUpdate, newItemFactory, headers, fields }) => {
       return <DynamicTable
         title={title}
@@ -395,12 +428,14 @@
           <>
             {fields.map(field => (
               <Td key={field.key}>
-                <TableInput 
-                  value={item[field.key]} 
-                  onChange={(e) => handleItemChange(index, field.key, e.target.value)} 
-                  placeholder={field.placeholder}
-                  type={field.type || 'text'}
-                />
+                <div style={field.minWidth ? { minWidth: field.minWidth } : {}}>
+                    <TableInput 
+                      value={item[field.key]} 
+                      onChange={(e) => handleItemChange(index, field.key, e.target.value)} 
+                      placeholder={field.placeholder}
+                      type={field.type || 'text'}
+                    />
+                </div>
               </Td>
             ))}
           </>
@@ -418,7 +453,7 @@
         fields={[
           { key: 'title', placeholder: 'Título' },
           { key: 'fundingSource', placeholder: 'Fuente' },
-          { key: 'adjudicationYear', placeholder: 'Año', type: 'number' },
+          { key: 'adjudicationYear', placeholder: 'Año', type: 'number', minWidth: '100px' },
           { key: 'executionPeriod', placeholder: 'Ej: 2022-2024' },
           { key: 'role', placeholder: 'Rol' },
           { key: 'accessLink', placeholder: 'URL', type: 'url' },
@@ -437,7 +472,7 @@
           { key: 'academicName', placeholder: 'Nombre' },
           { key: 'materialType', placeholder: 'Tipo' },
           { key: 'title', placeholder: 'Título' },
-          { key: 'year', placeholder: 'Año', type: 'number' },
+          { key: 'year', placeholder: 'Año', type: 'number', minWidth: '100px' },
           { key: 'curricularActivity', placeholder: 'Actividad' },
           { key: 'availability', placeholder: 'Disponibilidad' },
         ]}
@@ -455,7 +490,7 @@
           { key: 'academicName', placeholder: 'Nombre' },
           { key: 'workType', placeholder: 'Tipo' },
           { key: 'title', placeholder: 'Título' },
-          { key: 'year', placeholder: 'Año', type: 'number' },
+          { key: 'year', placeholder: 'Año', type: 'number', minWidth: '100px' },
           { key: 'curricularActivity', placeholder: 'Actividad' },
           { key: 'availability', placeholder: 'Disponibilidad' },
         ]}
@@ -473,7 +508,7 @@
           { key: 'academicName', placeholder: 'Nombre' },
           { key: 'projectType', placeholder: 'Tipo' },
           { key: 'projectName', placeholder: 'Nombre' },
-          { key: 'year', placeholder: 'Año', type: 'number' },
+          { key: 'year', placeholder: 'Año', type: 'number', minWidth: '100px' },
           { key: 'curricularActivity', placeholder: 'Actividad' },
           { key: 'availability', placeholder: 'Disponibilidad' },
         ]}
@@ -492,7 +527,7 @@
           { key: 'description', placeholder: 'Descripción' },
           { key: 'type', placeholder: 'Tipo' },
           { key: 'name', placeholder: 'Nombre' },
-          { key: 'startDate', placeholder: 'Año', type: 'number' },
+          { key: 'startDate', placeholder: 'Año', type: 'number', minWidth: '100px' },
           { key: 'currentSituation', placeholder: 'Situación' },
           { key: 'curricularActivity', placeholder: 'Actividad' },
         ]}
@@ -686,3 +721,4 @@
     </script>
 </body>
 </html>
+
