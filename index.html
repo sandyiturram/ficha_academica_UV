@@ -335,6 +335,7 @@
               { type === PublicationType.INDEXED && 
                 <Td>
                   <TableSelect value={item.indexation} onChange={(e)=>handleItemChange(index, 'indexation', e.target.value)}>
+                    <option value="">Seleccionar</option>
                     <option value="WOS">WOS</option>
                     <option value="SCOPUS">SCOPUS</option>
                     <option value="SCIELO">SCIELO</option>
@@ -363,7 +364,17 @@
                 <Td><TableInput value={item.place} onChange={(e)=>handleItemChange(index, 'place', e.target.value)} placeholder="Lugar"/></Td>
                 <Td><TableInput value={item.editorial} onChange={(e)=>handleItemChange(index, 'editorial', e.target.value)} placeholder="Editorial"/></Td>
               </>}
-              <Td><TableInput value={item.status} onChange={(e)=>handleItemChange(index, 'status', e.target.value)} placeholder="Estado"/></Td>
+              <Td>
+                <TableSelect
+                  value={item.status}
+                  onChange={(e) => handleItemChange(index, 'status', e.target.value)}
+                > 
+                  <option value="">Seleccionar</option>
+                  <option value="Enviado">Enviado</option>
+                  <option value="Aceptado">Aceptado</option>
+                  <option value="Publicado">Publicado</option>
+                </TableSelect>
+              </Td>
               {isArticle && <Td><TableInput value={item.issn} onChange={(e)=>handleItemChange(index, 'issn', e.target.value)} placeholder="ISSN"/></Td>}
               <Td><TableInput type="url" value={item.accessLink} onChange={(e)=>handleItemChange(index, 'accessLink', e.target.value)} placeholder="URL"/></Td>
             </>
@@ -373,7 +384,7 @@
 
       return (
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-8">3. Listado de publicaciones en los últimos 5 años</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-8">3. Listado de publicaciones en los últimos 5 años [2]</h1>
           {renderTableForType(PublicationType.INDEXED, '3.1 Publicaciones indexadas', 'En caso de publicaciones con más de un autor, indicar el autor/a principal.')}
           {renderTableForType(PublicationType.NON_INDEXED_BOOK, '3.2 Publicaciones no indexadas LIBRO', '')}
           {renderTableForType(PublicationType.NON_INDEXED_CHAPTER, '3.3 Publicaciones no indexadas CAPÍTULOS DE LIBRO', '')}
@@ -403,7 +414,17 @@
               <Td><TableInput type="date" value={item.requestDate} onChange={(e)=>handleItemChange(index, 'requestDate', e.target.value)}/></Td>
               <Td><TableInput type="date" value={item.publicationDate} onChange={(e)=>handleItemChange(index, 'publicationDate', e.target.value)}/></Td>
               <Td><TableInput value={item.registryNumber} onChange={(e)=>handleItemChange(index, 'registryNumber', e.target.value)} placeholder="Número"/></Td>
-              <Td><TableInput value={item.status} onChange={(e)=>handleItemChange(index, 'status', e.target.value)} placeholder="Estado"/></Td>
+              <Td>
+              <TableSelect
+                value={item.status}
+                onChange={(e) => handleItemChange(index, 'status', e.target.value)}
+              >
+                <option value="">Seleccionar</option>
+                <option value="En trámite">En trámite</option>
+                <option value="Solicitud presentada">Solicitud presentada</option>
+                <option value="Concedida">Concedida</option>
+              </TableSelect>
+            </Td>
               <Td><TableInput type="url" value={item.accessLink} onChange={(e)=>handleItemChange(index, 'accessLink', e.target.value)} placeholder="URL"/></Td>
             </>
           )}
@@ -429,12 +450,25 @@
             {fields.map(field => (
               <Td key={field.key}>
                 <div style={field.minWidth ? { minWidth: field.minWidth } : {}}>
+                  {/* --- Aquí va el bloque que te indico --- */}
+                  {field.type === 'select' ? (
+                    <TableSelect
+                      value={item[field.key]}
+                      onChange={(e) => handleItemChange(index, field.key, e.target.value)}
+                    >
+                      <option value="">Seleccionar</option>
+                      {field.options.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </TableSelect>
+                  ) : (
                     <TableInput 
                       value={item[field.key]} 
                       onChange={(e) => handleItemChange(index, field.key, e.target.value)} 
                       placeholder={field.placeholder}
                       type={field.type || 'text'}
                     />
+                  )}
                 </div>
               </Td>
             ))}
@@ -463,11 +497,11 @@
     
     const EducationalMaterialSection = ({ data, onUpdate }) => (
       <GenericSection 
-        title="6. Material educativo original"
+        title="6. Material educativo original[3]"
         data={data}
         onUpdate={onUpdate}
         newItemFactory={() => ({ id: crypto.randomUUID(), academicName: '', materialType: '', title: '', year: '', curricularActivity: '', availability: '' })}
-        headers={['Nombre completo del académico', 'Tipo de material educativo', 'Título', 'Año', 'Actividad curricular', 'Disponibilidad']}
+        headers={['Nombre completo del académico', 'Tipo de material educativo', 'Título', 'Año', 'Actividad curricular', 'Disponibilidad del material[5]']}
         fields={[
           { key: 'academicName', placeholder: 'Nombre' },
           { key: 'materialType', placeholder: 'Tipo' },
@@ -481,7 +515,7 @@
 
     const AcademicWorkSection = ({ data, onUpdate }) => (
       <GenericSection 
-        title="7. Trabajo académico original"
+        title="7. Trabajo académico original [4]"
         data={data}
         onUpdate={onUpdate}
         newItemFactory={() => ({ id: crypto.randomUUID(), academicName: '', workType: '', title: '', year: '', curricularActivity: '', availability: '' })}
@@ -525,7 +559,12 @@
         fields={[
           { key: 'academicName', placeholder: 'Nombre' },
           { key: 'description', placeholder: 'Descripción' },
-          { key: 'type', placeholder: 'Tipo' },
+          { 
+            key: 'type', 
+            type: 'select', 
+            options: ['Centro', 'Grupo', 'Programa', 'Red'],
+            minWidth: '180px' // <-- Agranda el campo "Tipo" 
+          },
           { key: 'name', placeholder: 'Nombre' },
           { key: 'startDate', placeholder: 'Año', type: 'number', minWidth: '100px' },
           { key: 'currentSituation', placeholder: 'Situación' },
